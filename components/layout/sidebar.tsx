@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -38,13 +37,16 @@ export function Sidebar() {
   // Fungsi untuk mengambil data user
   const fetchUser = async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      const response = await fetch("/api/auth/me", {
+        credentials: "include", // <-- Tambahkan ini
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch user");
+
       const data = await response.json();
-      if (data.username) {
-        setUsername(data.username);
-      }
+      setUsername(data.user.username);
     } catch (error) {
-      console.error("Gagal mengambil data user:", error);
+      console.error("Fetch user error:", error);
     }
   };
 
@@ -54,7 +56,7 @@ export function Sidebar() {
       const response = await fetch("/api/auth/signout", {
         method: "POST",
       });
-      
+
       if (response.ok) {
         // Redirect ke halaman login setelah signout
         router.push("/signin");
@@ -143,4 +145,3 @@ export function Sidebar() {
     </div>
   );
 }
-

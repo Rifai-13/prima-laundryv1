@@ -70,5 +70,5 @@ const handleMiddlewareError = (request: any) => {
 };
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/signin', '/signup']
+  matcher: ['/dashboard/:path*', '/signin', '/signup', '/api/auth/:path*']
 };
