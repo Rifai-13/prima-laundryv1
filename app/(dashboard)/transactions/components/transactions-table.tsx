@@ -116,7 +116,6 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   href={{
                     pathname: `/transactions/${transaction.id}`,
                     query: {
-                      // Tambahkan query params untuk edit mode
                       id: transaction.id,
                       customerName: transaction.customerName,
                       itemType: transaction.itemType,

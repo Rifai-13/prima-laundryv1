@@ -3,11 +3,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { getTransactions } from "@/lib/data"; // Import the available getTransactions function
 import { TransactionForm } from "../components/transaction-form";
 
-// interface TransactionEditPageProps {
-//   params: {
-//     id: string;
-//   };
-// }
 
 export default async function TransactionEditPage({
   params,

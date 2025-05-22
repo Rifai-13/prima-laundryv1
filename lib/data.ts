@@ -15,7 +15,7 @@ const withDB = async <T>(fn: () => Promise<T>): Promise<T> => {
     return await fn();
   } catch (error) {
     console.error("Database operation failed:", error);
-    return [] as T; // Mengembalikan array kosong jika T adalah array
+    throw error;
   }
 };
 
@@ -44,36 +44,32 @@ const DEFAULT_STATUS_DATA = [
   { name: "cancelled", value: 0 },
 ];
 
-// Helper function untuk handle aggregate result
 const getAggregateResult = (result: any[], defaultValue: number = 0) => {
   return result[0]?.total ?? defaultValue;
 };
 
-// lib/data.ts
 export const getTransactions = async (): Promise<TransactionType[]> => {
-  return withDB<TransactionType[]>(async () => {
-    try {
-      const Transaction = await getTransactionModel();
-      const transactions = await Transaction.find()
-        .sort({ createdAt: -1 })
-        .lean();
+  try {
+    const Transaction = await getTransactionModel();
+    const transactions = await Transaction.find()
+      .sort({ createdAt: -1 })
+      .lean();
 
-      return transactions.map((t) => ({
-        id: t._id.toString(), // Konversi ObjectId ke string
-        customerName: t.customerName,
-        itemType: t.itemType,
-        phoneNumber: t.phoneNumber,
-        weight: t.weight,
-        price: t.price,
-        status: t.status,
-        createdAt: t.createdAt, // Tetap sebagai Date object
-        updatedAt: t.updatedAt, // Tetap sebagai Date object
-      }));
-    } catch (error) {
-      console.error("Failed to fetch transactions:", error);
-      return [];
-    }
-  });
+    return transactions.map(t => ({
+      id: t._id.toString(),
+      customerName: t.customerName,
+      itemType: t.itemType,
+      phoneNumber: t.phoneNumber,
+      weight: t.weight,
+      price: t.price,
+      status: t.status,
+      createdAt: new Date(t.createdAt),
+      updatedAt: new Date(t.updatedAt)
+    }));
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+    throw error;
+  }
 };
 
 export async function getTransactionById(id: string) {
