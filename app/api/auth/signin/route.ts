@@ -1,96 +1,81 @@
-// app/api/auth/signin/route.ts
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import User, { IUser } from '@/lib/models/user.model';
+import connectDB from '@/lib/mongodb';
+import User from '@/lib/models/user.model';
 import Session from '@/lib/models/session.model';
-import { sign } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { signToken, setSessionCookie } from '@/lib/auth-utils';
 import bcrypt from 'bcryptjs';
+import { validateEnv, validateCredentials } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
     // Validasi environment variables
-    if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
-      throw new Error('Environment variables tidak valid');
-    }
+    validateEnv(['MONGO_URI', 'JWT_SECRET']);
 
-    // Koneksi MongoDB
-    await mongoose.connect(process.env.MONGO_URI);
+    // Koneksi database
+    await connectDB();
 
-    // Ambil dan validasi data request
+    // Validasi input
     const { email, password } = await request.json();
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email dan password harus diisi" },
-        { status: 400 }
-      );
-    }
+    validateCredentials(email, password);
 
-    // Cari user dengan type casting
+    // Cari user
     const user = await User.findOne({ email: email.toLowerCase().trim() })
       .select('+password')
-      .lean<IUser>(); // <-- Perbaikan type disini
+      .lean() as any;
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Email atau password salah" },
-        { status: 401 }
-      );
+    if (!user || !user.name || !user.email || !user.password) {
+      return invalidCredentialsResponse();
     }
 
-    // Verifikasi password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Email atau password salah" },
-        { status: 401 }
-      );
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return invalidCredentialsResponse();
     }
 
-    // Generate JWT token
-    const token = sign(
-      { userId: user._id.toString() }, // <-- Perbaikan type disini
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    // Generate token dan session
+    const token = signToken(user._id.toString());
+    await createSession(user._id.toString(), token);
 
-    // Simpan session
-    await Session.create({
-      userId: user._id,
-      token,
-      expires: new Date(Date.now() + 86400000)
-    });
-
-    // Set cookie dengan await
-    const cookieStore = await cookies(); // <-- Perbaikan disini
-    cookieStore.set(
-      'session_token',
-      token,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 86400,
-        path: '/',
-        sameSite: 'lax'
-      }
-    );
-
-    return NextResponse.json({
+    // Response dengan cookie
+    const response = NextResponse.json({
       success: true,
-      user: {
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email
-      }
+      user: sanitizeUser(user)
     });
+
+    setSessionCookie(response, token);
+
+    return response;
 
   } catch (error: any) {
-    console.error('Error:', error);
-    return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
-      { status: 500 }
-    );
-  } finally {
-    await mongoose.disconnect();
+    console.error('Error in POST /api/auth/signin:', error);
+    return serverErrorResponse(error);
   }
 }
+
+// Helper functions
+const invalidCredentialsResponse = () =>
+  NextResponse.json(
+    { error: "Invalid email or password" },
+    { status: 401 }
+  );
+
+const sanitizeUser = (user: any) => ({
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email
+});
+
+const createSession = async (userId: string, token: string) => {
+  await Session.create({
+    userId,
+    token,
+    expires: new Date(Date.now() + 86400000)
+  });
+};
+
+function serverErrorResponse(error: any) {
+  return NextResponse.json(
+    { error: "Internal server error" },
+    { status: 500 }
+  );
+}
+

@@ -8,14 +8,14 @@ if (!MONGO_URI) {
 
 declare global {
   var mongooseCache: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
+    conn: mongoose.Connection | null;
+    promise: Promise<mongoose.Connection> | null;
   };
 }
 
 const cached = global.mongooseCache || { conn: null, promise: null };
 
-async function connectDB() {
+async function connectDB(): Promise<mongoose.Connection> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
@@ -24,13 +24,16 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGO_URI as string, opts).then(mongoose => {
-      console.log('✅ Connected to MongoDB');
-      return mongoose;
-    }).catch(error => {
-      console.error('❌ Failed to connect to MongoDB:', error);
-      throw error;
-    });
+    cached.promise = mongoose
+      .connect(MONGO_URI as string, opts)
+      .then((mongoose) => {
+        console.log('✅ Connected to MongoDB');
+        return mongoose.connection;
+      })
+      .catch((error) => {
+        console.error('❌ Failed to connect to MongoDB:', error);
+        throw error;
+      });
   }
 
   try {

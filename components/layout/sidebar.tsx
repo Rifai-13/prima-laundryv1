@@ -1,6 +1,5 @@
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -10,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { useState, useEffect } from "react";
 
 const navItems = [
   {
@@ -31,6 +31,45 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [username, setUsername] = useState<string>("");
+
+  // Fungsi untuk mengambil data user
+  const fetchUser = async () => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: "include", // <-- Tambahkan ini
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch user");
+
+      const data = await response.json();
+      setUsername(data.user.username);
+    } catch (error) {
+      console.error("Fetch user error:", error);
+    }
+  };
+
+  // Fungsi untuk handle signout
+  const handleSignOut = async () => {
+    try {
+      const response = await fetch("/api/auth/signout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Redirect ke halaman login setelah signout
+        router.push("/signin");
+      }
+    } catch (error) {
+      console.error("Gagal signout:", error);
+    }
+  };
+
+  // Ambil data user saat komponen dimount
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   return (
     <div className="flex h-screen flex-col border-r bg-background">
@@ -85,21 +124,19 @@ export function Sidebar() {
       </div>
       <div className="mt-auto p-4 border-t">
         <div className="flex items-center justify-between">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/auth/signout">
-              <LogOut className="h-4 w-4" />
-            </Link>
+          <Button variant="outline" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
           </Button>
           <div className="flex items-center space-x-2">
             <ModeToggle />
             <div className="flex items-center space-x-1">
               <span className="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full">
                 <span className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                  U
+                  {username ? username.charAt(0).toUpperCase() : "U"}
                 </span>
               </span>
               <div className="text-sm">
-                <p className="font-medium">Admin</p>
+                <p className="font-medium">{username || "User"}</p>
               </div>
             </div>
           </div>

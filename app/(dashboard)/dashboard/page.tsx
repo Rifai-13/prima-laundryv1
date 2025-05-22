@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import dynamic from 'next/dynamic';

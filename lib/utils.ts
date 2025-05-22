@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TransactionStatus } from './types';
+import { Types } from 'mongoose';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -51,4 +52,35 @@ export function getStatusColor(status: TransactionStatus): string {
 // Generate random ID
 export function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
+}
+
+export function validateHeaders(request: Request): string | null {
+  const userId = request.headers.get('x-user-id');
+  if (!userId || !Types.ObjectId.isValid(userId)) {
+    return null;
+  }
+  return userId;
+}
+
+export function validateEnv(keys: string[]): void {
+  keys.forEach(key => {
+    if (!process.env[key]) {
+      throw new Error(`${key} environment variable is required`);
+    }
+  });
+}
+
+export function validateCredentials(email?: string, password?: string): void {
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error('Invalid email format');
+  }
+
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters');
+  }
 }

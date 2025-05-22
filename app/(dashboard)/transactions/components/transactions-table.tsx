@@ -33,26 +33,36 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
   );
 
   const handleDelete = async () => {
-    if (!transactionToDelete) return;
+  if (!transactionToDelete) return;
 
-    try {
-      await deleteTransaction(transactionToDelete);
-      toast({
-        title: "Transaction deleted",
-        description: "The transaction has been successfully deleted.",
-      });
-      router.refresh();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete the transaction.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setTransactionToDelete(null);
+  try {
+    const response = await fetch(`/api/transactions/${transactionToDelete}`, {
+      method: "DELETE",
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Gagal menghapus transaksi");
     }
-  };
+
+    toast({
+      title: "Berhasil!",
+      description: "Transaksi berhasil dihapus",
+    });
+
+    router.refresh();
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  } finally {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
+  }
+};
 
   const columns: ColumnDef<Transaction>[] = [
     {
@@ -106,7 +116,6 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   href={{
                     pathname: `/transactions/${transaction.id}`,
                     query: {
-                      // Tambahkan query params untuk edit mode
                       id: transaction.id,
                       customerName: transaction.customerName,
                       itemType: transaction.itemType,
