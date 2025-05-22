@@ -1,6 +1,6 @@
 // models/Transaction.ts
-import connectDB from '@/lib/mongodb';
-import mongoose, { Document, Model, Schema } from 'mongoose';
+import connectDB from "@/lib/mongodb";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 interface ITransaction extends Document {
   customerName: string;
@@ -8,77 +8,74 @@ interface ITransaction extends Document {
   phoneNumber: string;
   weight: number;
   price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: "pending" | "processing" | "completed" | "cancelled";
   createdAt: Date;
   updatedAt: Date;
 }
 
 const transactionSchema = new Schema<ITransaction>(
   {
-    customerName: { 
-      type: String, 
-      required: [true, 'Nama pelanggan harus diisi'],
-      minlength: [3, 'Nama minimal 3 karakter'],
-      trim: true
+    customerName: {
+      type: String,
+      required: [true, "Nama pelanggan harus diisi"],
     },
-    itemType: { 
-      type: String, 
-      required: [true, 'Jenis barang harus diisi'],
-      enum: {
-        values: ['regular', 'express', 'karpet', 'selimut'],
-        message: 'Jenis barang {VALUE} tidak valid'
+    itemType: {
+      type: String,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      validate: {
+        validator: (v: string) => /^\d{10,14}$/.test(v),
+        message: "Nomor telepon harus 10-14 digit angka",
       },
-      default: 'regular'
     },
-    phoneNumber: { 
-      type: String, 
-      required: [true, 'Nomor telepon harus diisi'],
-      match: [/^08[1-9][0-9]{7,10}$/, 'Format nomor telepon tidak valid'],
-      index: true
+    weight: {
+      type: Number,
+      required: true,
     },
-    weight: { 
-      type: Number, 
-      required: [true, 'Berat harus diisi'],
-      min: [0.1, 'Berat minimal 0.1 kg']
-    },
-    price: { 
-      type: Number, 
-      required: [true, 'Harga harus diisi'],
-      min: [0, 'Harga tidak boleh negatif']
+    price: {
+      type: Number,
+      required: true,
     },
     status: {
       type: String,
-      enum: {
-        values: ['pending', 'processing', 'completed', 'cancelled'],
-        message: 'Status {VALUE} tidak valid'
-      },
-      default: 'pending',
-      index: true
+      enum: ["pending", "processing", "completed", "cancelled"],
+      required: true,
     },
   },
-  { 
+  {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
   }
 );
 
-transactionSchema.virtual('formattedDate').get(function() {
-  return this.createdAt.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+
+transactionSchema.virtual("formattedDate").get(function () {
+  return this.createdAt.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 });
 
-let Transaction: Model<ITransaction>;
+// let Transaction: Model<ITransaction>;
+
+transactionSchema.statics = {
+  async connect() {
+    if (!mongoose.connection.readyState) {
+      await connectDB();
+    }
+    return this;
+  },
+};
 
 export const getTransactionModel = async (): Promise<Model<ITransaction>> => {
-  if (!mongoose.models.Transaction) {
-    await connectDB();
-    Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
+  if (mongoose.models.Transaction) {
+    return mongoose.models.Transaction;
   }
-  return mongoose.models.Transaction;
+
+  await connectDB();
+  return mongoose.model<ITransaction>("Transaction", transactionSchema);
 };
 
 export type { ITransaction };

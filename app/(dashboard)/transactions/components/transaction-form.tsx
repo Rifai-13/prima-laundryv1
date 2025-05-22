@@ -11,17 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  customerName: z.string().min(3, { message: "Customer name must be at least 3 characters" }),
-  itemType: z.string().min(2, { message: "Item type must be at least 2 characters" }),
-  phoneNumber: z.string().min(10, { message: "Phone number must be at least 10 characters" }),
-  weight: z.coerce.number().positive({ message: "Weight must be a positive number" }),
-  price: z.coerce.number().positive({ message: "Price must be a positive number" }),
-  status: z.enum(["pending", "processing", "completed", "cancelled"] as const),
+  customerName: z.string().min(3),
+  itemType: z.string(),
+  phoneNumber: z.string().min(10).max(14),
+  weight: z.coerce.number().positive(),
+  price: z.coerce.number().positive(),
+  status: z.enum(["pending", "processing", "completed", "cancelled"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -34,7 +40,7 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -60,33 +66,54 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
           status: "pending" as TransactionStatus,
         },
   });
-  
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    
+
     try {
-      if (transaction) {
-        await updateTransaction(transaction.id, data);
-        toast({
-          title: "Transaction updated",
-          description: "Transaction has been updated successfully.",
-        });
-      } else {
-        await addTransaction(data);
-        toast({
-          title: "Transaction created",
-          description: "Transaction has been created successfully.",
-        });
+      const payload = {
+        ...data,
+        phoneNumber: data.phoneNumber.replace(/[^\d]/g, ""),
+      };
+
+      const url = transaction
+        ? `/api/transactions/${transaction.id}`
+        : "/api/transactions";
+
+      const method = transaction ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        const errorMessage =
+          responseData.error ||
+          (transaction
+            ? "Gagal mengupdate transaksi"
+            : "Gagal membuat transaksi");
+        throw new Error(errorMessage);
       }
-      
+
+      toast({
+        title: "Sukses!",
+        description: transaction
+          ? "Transaksi berhasil diupdate"
+          : "Transaksi baru berhasil dibuat",
+      });
+
       router.push("/transactions");
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: transaction
-          ? "Failed to update the transaction."
-          : "Failed to create the transaction.",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -107,41 +134,54 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
                 placeholder="Enter customer name"
               />
               {errors.customerName && (
-                <p className="text-sm text-red-500">{errors.customerName.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.customerName.message}
+                </p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input
-                id="phoneNumber"
                 {...register("phoneNumber")}
-                placeholder="Enter phone number"
+                onChange={(e) => {
+                  const value = e.target.value
+                    .replace(/[^\d+]/g, "") // Hanya pertahankan angka dan +
+                    .replace(/(\+\d{0,3})(\d{0,15})/, "$1$2"); // Batasi panjang
+                  setValue("phoneNumber", value);
+                }}
+                placeholder="Contoh: 08123456789"
               />
               {errors.phoneNumber && (
-                <p className="text-sm text-red-500">{errors.phoneNumber.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.phoneNumber.message}
+                </p>
               )}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="itemType">Item Type</Label>
+              <Label htmlFor="itemType">Jenis Barang</Label>
               <Input
                 id="itemType"
                 {...register("itemType")}
-                placeholder="Type of laundry items"
+                placeholder="Masukkan jenis barang (e.g. baju)"
               />
               {errors.itemType && (
-                <p className="text-sm text-red-500">{errors.itemType.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.itemType.message}
+                </p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
                 defaultValue={transaction?.status || "pending"}
-                onValueChange={(value) => setValue("status", value as TransactionStatus)}
+                onValueChange={(value) =>
+                  setValue("status", value.toLowerCase() as TransactionStatus)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
@@ -158,10 +198,10 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
               )}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="weight">Weight (kg)</Label>
+              <Label htmlFor="weight">Berat (kg)</Label>
               <Input
                 id="weight"
                 type="number"
@@ -173,9 +213,9 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
                 <p className="text-sm text-red-500">{errors.weight.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="price">Price (Rp)</Label>
+              <Label htmlFor="price">Harga (Rp)</Label>
               <Input
                 id="price"
                 type="number"
@@ -188,25 +228,25 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter className="flex justify-end space-x-2 pt-2">
           <Button
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
           >
-            Cancel
+            Batal
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {transaction ? "Updating..." : "Creating..."}
+                {transaction ? "Menyimpan..." : "Membuat..."}
               </>
             ) : transaction ? (
-              "Update Transaction"
+              "Simpan Perubahan"
             ) : (
-              "Create Transaction"
+              "Buat Transaksi"
             )}
           </Button>
         </CardFooter>

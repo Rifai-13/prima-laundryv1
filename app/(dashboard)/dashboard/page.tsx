@@ -10,7 +10,6 @@ const DashboardStats = dynamic(
   () => import('@/components/layout/dashboard-stats'),
   { 
     ssr: false,
-    loading: () => <div>Loading stats...</div>
   }
 );
 

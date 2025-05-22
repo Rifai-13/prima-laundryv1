@@ -7,7 +7,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Transaction } from "@/lib/types";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteTransaction } from "@/lib/data";
@@ -23,11 +28,13 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
+    null
+  );
 
   const handleDelete = async () => {
     if (!transactionToDelete) return;
-    
+
     try {
       await deleteTransaction(transactionToDelete);
       toast({
@@ -84,7 +91,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
       id: "actions",
       cell: ({ row }) => {
         const transaction = row.original;
-        
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -95,7 +102,21 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link href={`/transactions/${transaction.id}`}>
+                <Link
+                  href={{
+                    pathname: `/transactions/${transaction.id}`,
+                    query: {
+                      // Tambahkan query params untuk edit mode
+                      id: transaction.id,
+                      customerName: transaction.customerName,
+                      itemType: transaction.itemType,
+                      phoneNumber: transaction.phoneNumber,
+                      weight: transaction.weight,
+                      price: transaction.price,
+                      status: transaction.status,
+                    },
+                  }}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Link>
@@ -119,13 +140,13 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
 
   return (
     <>
-      <DataTable 
-        columns={columns} 
-        data={transactions} 
+      <DataTable
+        columns={columns}
+        data={transactions}
         searchColumn="customerName"
         searchPlaceholder="Search by customer name..."
       />
-      
+
       <ConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

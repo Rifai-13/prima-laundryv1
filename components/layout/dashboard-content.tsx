@@ -1,4 +1,3 @@
-"use client";
 
 import { formatCurrency } from "@/lib/utils";
 import { Banknote, ShoppingBag, Clock } from "lucide-react";

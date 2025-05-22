@@ -3,17 +3,19 @@ import connectDB from "@/lib/mongodb";
 import { getTransactionModel } from "./models/Transaction";
 import type {
   Transaction as TransactionType,
+  Transaction,
   DashboardStats,
   RevenueData,
 } from "./types";
 
+// lib/data.ts
 const withDB = async <T>(fn: () => Promise<T>): Promise<T> => {
   try {
     await connectDB();
     return await fn();
   } catch (error) {
     console.error("Database operation failed:", error);
-    return {} as T;
+    return [] as T; // Mengembalikan array kosong jika T adalah array
   }
 };
 
@@ -45,6 +47,122 @@ const DEFAULT_STATUS_DATA = [
 // Helper function untuk handle aggregate result
 const getAggregateResult = (result: any[], defaultValue: number = 0) => {
   return result[0]?.total ?? defaultValue;
+};
+
+// lib/data.ts
+export const getTransactions = async (): Promise<TransactionType[]> => {
+  return withDB<TransactionType[]>(async () => {
+    try {
+      const Transaction = await getTransactionModel();
+      const transactions = await Transaction.find()
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return transactions.map((t) => ({
+        id: t._id.toString(), // Konversi ObjectId ke string
+        customerName: t.customerName,
+        itemType: t.itemType,
+        phoneNumber: t.phoneNumber,
+        weight: t.weight,
+        price: t.price,
+        status: t.status,
+        createdAt: t.createdAt, // Tetap sebagai Date object
+        updatedAt: t.updatedAt, // Tetap sebagai Date object
+      }));
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+      return [];
+    }
+  });
+};
+
+export async function getTransactionById(id: string) {
+  try {
+    await connectDB(); // Ensure DB connection
+    const Transaction = await getTransactionModel();
+
+    // Fetch transaction by ID
+    const transaction = await Transaction.findById(id).lean(); // `.lean()` returns a plain object
+
+    return transaction || null;  // If no transaction found, return null
+  } catch (error) {
+    console.error("Error fetching transaction:", error);
+    return null;
+  }
+}
+
+// lib/data.ts
+export const addTransaction = async (data: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction> => {
+  return withDB<Transaction>(async () => {
+    try {
+      const Transaction = await getTransactionModel();
+      const newTransaction = new Transaction({
+        customerName: data.customerName,
+        itemType: data.itemType,
+        phoneNumber: data.phoneNumber,
+        weight: data.weight,
+        price: data.price,
+        status: data.status
+      });
+      
+      const savedTransaction = await newTransaction.save() as Transaction & { _id: any };
+      
+      return {
+        id: savedTransaction._id.toString(),
+        customerName: savedTransaction.customerName,
+        itemType: savedTransaction.itemType,
+        phoneNumber: savedTransaction.phoneNumber,
+        weight: savedTransaction.weight,
+        price: savedTransaction.price,
+        status: savedTransaction.status,
+        createdAt: savedTransaction.createdAt,
+        updatedAt: savedTransaction.updatedAt
+      };
+    } catch (error) {
+      console.error("Failed to create transaction:", error);
+      throw new Error('Failed to create transaction');
+    }
+  });
+};
+
+export const updateTransaction = async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
+  return withDB<Transaction>(async () => {
+    try {
+      const Transaction = await getTransactionModel();
+      const updatedTransaction = await Transaction.findByIdAndUpdate(
+        id,
+        { $set: data },
+        { new: true, runValidators: true }
+      ).lean();
+
+      if (!updatedTransaction) {
+        throw new Error('Transaction not found');
+      }
+
+      return {
+        id: updatedTransaction._id.toString(),
+        ...updatedTransaction,
+        createdAt: updatedTransaction.createdAt,
+        updatedAt: updatedTransaction.updatedAt
+      };
+    } catch (error) {
+      console.error("Failed to update transaction:", error);
+      throw new Error('Failed to update transaction');
+    }
+  });
+};
+
+export const deleteTransaction = async (id: string) => {
+  return withDB(async () => {
+    try {
+      const Transaction = await getTransactionModel();
+      await Transaction.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      console.error("Failed to delete transaction:", error);
+      throw new Error("Failed to delete transaction");
+    }
+  });
 };
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {

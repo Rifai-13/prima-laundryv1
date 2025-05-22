@@ -1,20 +1,23 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { getTransactionById } from "@/lib/data";
+import { getTransactions } from "@/lib/data"; // Import the available getTransactions function
 import { TransactionForm } from "../components/transaction-form";
 
-interface TransactionEditPageProps {
-  params: {
-    id: string;
-  };
-}
+// interface TransactionEditPageProps {
+//   params: {
+//     id: string;
+//   };
+// }
 
-export default async function TransactionEditPage({ params }: TransactionEditPageProps) {
-  const transaction = await getTransactionById(params.id);
-  
-  if (!transaction) {
-    notFound();
-  }
+export default async function TransactionEditPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const transactions = await getTransactions();
+  const transaction = transactions.find((t) => t.id === params.id);
+
+  if (!transaction) notFound();
 
   return (
     <div>
@@ -22,9 +25,10 @@ export default async function TransactionEditPage({ params }: TransactionEditPag
         title="Edit Transaction"
         description="Update the details of this transaction"
       />
-      
+
       <div className="max-w-2xl mx-auto">
-        <TransactionForm transaction={transaction} />
+        <TransactionForm transaction={transaction} />{" "}
+        {/* Pass the fetched transaction data */}
       </div>
     </div>
   );
