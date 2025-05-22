@@ -152,15 +152,15 @@ export const updateTransaction = async (id: string, data: Partial<Transaction>):
   });
 };
 
-export const deleteTransaction = async (id: string) => {
+export const deleteTransaction = async (id: string): Promise<boolean> => {
   return withDB(async () => {
     try {
       const Transaction = await getTransactionModel();
-      await Transaction.findByIdAndDelete(id);
-      return true;
+      const result = await Transaction.findByIdAndDelete(id);
+      return !!result;
     } catch (error) {
       console.error("Failed to delete transaction:", error);
-      throw new Error("Failed to delete transaction");
+      throw new Error('Gagal menghapus transaksi');
     }
   });
 };

@@ -9,10 +9,10 @@ export async function PUT(
   try {
     await connectDB();
     const Transaction = await getTransactionModel();
-
+    
     // Ambil ID dari parameter URL
     const id = params.id;
-
+    
     // Validasi ID
     if (!id || id.length !== 24) {
       return NextResponse.json(
@@ -22,12 +22,13 @@ export async function PUT(
     }
 
     const body = await request.json();
-
+    
     // Update transaction
-    const updatedTransaction = await Transaction.findByIdAndUpdate(id, body, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+      id,
+      body,
+      { new: true, runValidators: true }
+    );
 
     if (!updatedTransaction) {
       return NextResponse.json(
@@ -37,15 +38,13 @@ export async function PUT(
     }
 
     // Assert the type to inform TypeScript about the structure
-    const transactionObj = updatedTransaction as {
-      _id: any;
-      toObject: () => object;
-    };
+    const transactionObj = updatedTransaction as { _id: any; toObject: () => object };
 
     return NextResponse.json({
       id: transactionObj._id.toString(),
       ...transactionObj.toObject(),
     });
+
   } catch (error: any) {
     console.error("Error:", error);
     return NextResponse.json(
@@ -56,22 +55,25 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } } // <-- Gunakan `context` sebagai parameter
 ) {
   try {
     await connectDB();
     const Transaction = await getTransactionModel();
+    
+    // Ambil ID dari context.params
+    const id = context.params.id; // <-- Akses ID melalui context.params
 
     // Validasi ID
-    if (!params.id || params.id.length !== 24) {
+    if (!id || id.length !== 24) {
       return NextResponse.json(
         { error: "ID transaksi tidak valid" },
         { status: 400 }
       );
     }
 
-    const deletedTransaction = await Transaction.findByIdAndDelete(params.id);
+    const deletedTransaction = await Transaction.findByIdAndDelete(id);
 
     if (!deletedTransaction) {
       return NextResponse.json(
@@ -82,8 +84,9 @@ export async function DELETE(
 
     return NextResponse.json({
       message: "Transaksi berhasil dihapus",
-      id: params.id,
+      id: id // <-- Gunakan variabel id yang sudah diambil
     });
+
   } catch (error: any) {
     console.error("Error:", error);
     return NextResponse.json(
