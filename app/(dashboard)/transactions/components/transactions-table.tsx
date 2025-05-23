@@ -65,26 +65,26 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
 };
 
   const columns: ColumnDef<Transaction>[] = [
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => <div className="font-medium">{row.original.id}</div>,
-    },
+    // {
+    //   accessorKey: "id",
+    //   header: "ID",
+    //   cell: ({ row }) => <div className="font-medium">{row.original.id}</div>,
+    // },
     {
       accessorKey: "customerName",
-      header: "Customer",
+      header: "Nama Pelanggan",
     },
     {
       accessorKey: "itemType",
-      header: "Item Type",
+      header: "Jenis Barang",
     },
     {
       accessorKey: "weight",
-      header: "Weight (kg)",
+      header: "Berat (kg)",
     },
     {
       accessorKey: "price",
-      header: "Price",
+      header: "Harga",
       cell: ({ row }) => formatCurrency(row.original.price),
     },
     {
@@ -94,7 +94,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     },
     {
       accessorKey: "createdAt",
-      header: "Date",
+      header: "Tanggal",
       cell: ({ row }) => formatDate(row.original.createdAt),
     },
     {
@@ -116,7 +116,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   href={{
                     pathname: `/transactions/${transaction.id}`,
                     query: {
-                      id: transaction.id,
+                      // id: transaction.id,
                       customerName: transaction.customerName,
                       itemType: transaction.itemType,
                       phoneNumber: transaction.phoneNumber,
