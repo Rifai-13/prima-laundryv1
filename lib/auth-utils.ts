@@ -1,6 +1,20 @@
-import { sign } from 'jsonwebtoken';
-import { NextResponse } from 'next/server';
+import { sign, verify } from 'jsonwebtoken';
+import { NextResponse, NextRequest } from 'next/server';
 
+export function getUserIdFromToken(request: NextRequest): string | null {
+  try {
+    const token = request.cookies.get('session_token')?.value;
+    
+    if (!token || !process.env.JWT_SECRET) return null;
+    
+    const decoded = verify(token, process.env.JWT_SECRET) as { userId: string };
+    return decoded.userId;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Fungsi existing tetap dipertahankan
 export function signToken(userId: string): string {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not defined');

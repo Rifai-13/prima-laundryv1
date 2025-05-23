@@ -31,16 +31,16 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: formData.email.toLowerCase().trim(),
-          password: formData.password
+          password: formData.password,
         }),
-        credentials: 'include' // Penting untuk cookie
+        credentials: "include", // Penting untuk cookie
       });
 
       if (!response.ok) {
@@ -52,7 +52,6 @@ export default function SignIn() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);
-
     } catch (error: any) {
       toast.error(error.message || "Error 500: Hubungi admin");
     } finally {
@@ -121,26 +120,31 @@ export default function SignIn() {
                   Forgot password?
                 </Link>
               </div>
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-500" />
-                )}
-              </Button>
+              <div className="relative">
+                {" "}
+                {/* Tambahkan div wrapper dengan relative positioning */}
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-500" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-500" />
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

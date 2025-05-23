@@ -34,21 +34,31 @@ export function Sidebar() {
   const router = useRouter();
   const [username, setUsername] = useState<string>("");
 
-  // Fungsi untuk mengambil data user
-  const fetchUser = async () => {
-    try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include", // <-- Tambahkan ini
-      });
+const fetchUser = async () => {
+  try {
+    const response = await fetch("/api/auth/me", {
+      credentials: "include",
+    });
 
-      if (!response.ok) throw new Error("Failed to fetch user");
-
-      const data = await response.json();
-      setUsername(data.user.username);
-    } catch (error) {
-      console.error("Fetch user error:", error);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        router.push("/signin");
+      }
+      throw new Error(data.error || "Failed to fetch user");
     }
-  };
+
+    setUsername(data.user.username);
+  } catch (error: any) {
+    console.error("Fetch user error:", error);
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  }
+};
 
   // Fungsi untuk handle signout
   const handleSignOut = async () => {
@@ -145,3 +155,7 @@ export function Sidebar() {
     </div>
   );
 }
+function toast(arg0: { title: string; description: any; variant: string; }) {
+  throw new Error("Function not implemented.");
+}
+

@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TransactionStatus } from './types';
+import { getToken } from 'next-auth/jwt';
+import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 
 export function cn(...inputs: ClassValue[]) {
@@ -54,12 +56,13 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-export function validateHeaders(request: Request): string | null {
-  const userId = request.headers.get('x-user-id');
-  if (!userId || !Types.ObjectId.isValid(userId)) {
+export async function validateHeaders(request: NextRequest) {
+  try {
+    const token = await getToken({ req: request });
+    return token?.sub || null;
+  } catch (error) {
     return null;
   }
-  return userId;
 }
 
 export function validateEnv(keys: string[]): void {

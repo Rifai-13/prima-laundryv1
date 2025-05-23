@@ -3,14 +3,15 @@ import { PageHeader } from "@/components/layout/page-header";
 import { getTransactions } from "@/lib/data"; // Import the available getTransactions function
 import { TransactionForm } from "../components/transaction-form";
 
-
 export default async function TransactionEditPage({
   params,
 }: {
   params: { id: string };
 }) {
   const transactions = await getTransactions();
-  const transaction = transactions.find((t) => t.id === params.id);
+
+  // Konversi ke string jika ID dari database berupa number
+  const transaction = transactions.find((t) => t.id.toString() === params.id);
 
   if (!transaction) notFound();
 
@@ -22,8 +23,7 @@ export default async function TransactionEditPage({
       />
 
       <div className="max-w-2xl mx-auto">
-        <TransactionForm transaction={transaction} />{" "}
-        {/* Pass the fetched transaction data */}
+        <TransactionForm transaction={transaction} />
       </div>
     </div>
   );

@@ -1,35 +1,53 @@
 import { NextResponse } from 'next/server';
 import User from '@/lib/models/user.model';
 import connectDB from '@/lib/mongodb';
-import { validateHeaders } from '@/lib/utils';
+import { getToken } from 'next-auth/jwt';
+import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
+import { getUserIdFromToken } from '@/lib/auth-utils';
 
-export async function GET(request: Request) {
+
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    
-    const userId = validateHeaders(request);
-    if (!userId) return unauthorizedResponse();
 
-    const user = await User.findById(userId).select('-password -__v');
-    if (!user) return notFoundResponse('User');
+    // Dapatkan user ID dari token
+    const userId = getUserIdFromToken(request);
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" }, 
+        { status: 401 }
+      );
+    }
+
+    // Validasi format ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: "Invalid user ID format" }, 
+        { status: 400 }
+      );
+    }
+
+    // Cari user dengan ObjectId
+    const user = await User.findById(
+      new mongoose.Types.ObjectId(userId)
+    ).select('-password -__v');
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" }, 
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ user });
 
   } catch (error: any) {
     console.error('Error in GET /api/auth/me:', error);
-    return serverErrorResponse(error);
+    return NextResponse.json(
+      { error: error.message || "Internal server error" }, 
+      { status: 500 }
+    );
   }
 }
-
-// Helper functions
-const unauthorizedResponse = () => 
-  NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-const notFoundResponse = (entity: string) => 
-  NextResponse.json({ error: `${entity} not found` }, { status: 404 });
-
-const serverErrorResponse = (error: Error) => 
-  NextResponse.json(
-    { error: error.message || "Internal server error" }, 
-    { status: 500 }
-  );

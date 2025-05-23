@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -5,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Transaction, TransactionStatus } from "@/lib/types";
-import { addTransaction, updateTransaction } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,23 +19,45 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Transaction, TransactionStatus } from "@/lib/types";
+
+// export interface Transaction {
+//   id: string;
+//   customerName: string;
+//   itemType: string;
+//   phoneNumber: string;
+//   weight: number;
+//   price: number;
+//   status: TransactionStatus;
+//   createdAt?: Date;
+//   updatedAt?: Date;
+// }
 
 const formSchema = z.object({
-  customerName: z.string().min(3),
-  itemType: z.string(),
-  phoneNumber: z.string().min(10).max(14),
-  weight: z.coerce.number().positive(),
-  price: z.coerce.number().positive(),
+  customerName: z.string().min(3, "Nama harus minimal 3 karakter"),
+  itemType: z.string().min(1, "Jenis barang wajib diisi"),
+  phoneNumber: z
+    .string()
+    .min(10, "Nomor telepon minimal 10 digit")
+    .max(14, "Nomor telepon maksimal 14 digit"),
+  weight: z.coerce
+    .number()
+    .positive("Berat harus angka positif")
+    .min(0.1, "Berat minimal 0.1 kg"),
+  price: z.coerce
+    .number()
+    .positive("Harga harus angka positif")
+    .min(1000, "Harga minimal Rp 1.000"),
   status: z.enum(["pending", "processing", "completed", "cancelled"]),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// type FormValues = z.infer<typeof formSchema>;
 
-interface TransactionFormProps {
-  transaction?: Transaction;
-}
+// interface TransactionFormProps {
+//   transaction?: Transaction;
+// }
 
-export function TransactionForm({ transaction }: TransactionFormProps) {
+export function TransactionForm({ transaction }: { transaction?: Transaction }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,75 +66,61 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: transaction
-      ? {
-          customerName: transaction.customerName,
-          itemType: transaction.itemType,
-          phoneNumber: transaction.phoneNumber,
-          weight: transaction.weight,
-          price: transaction.price,
-          status: transaction.status,
-        }
-      : {
-          customerName: "",
-          itemType: "",
-          phoneNumber: "",
-          weight: 0,
-          price: 0,
-          status: "pending" as TransactionStatus,
-        },
+    defaultValues: {
+      customerName: transaction?.customerName || "",
+      itemType: transaction?.itemType || "",
+      phoneNumber: transaction?.phoneNumber || "",
+      weight: transaction?.weight || 0,
+      price: transaction?.price || 0,
+      status: transaction?.status || "pending",
+    },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const formatPhoneNumber = (value: string) => {
+    return value
+      .replace(/[^\d+]/g, "")
+      .replace(/(\+?\d{0,3})(\d{0,4})(\d{0,4})/, (_, p1, p2, p3) => {
+        let parts = [];
+        if (p1) parts.push(p1);
+        if (p2) parts.push(p2);
+        if (p3) parts.push(p3);
+        return parts.join("-");
+      });
+  };
+
+ const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-
     try {
-      const payload = {
-        ...data,
-        phoneNumber: data.phoneNumber.replace(/[^\d]/g, ""),
-      };
+      const response = await fetch(
+        transaction ? `/api/transactions/${transaction.id}` : "/api/transactions",
+        {
+          method: transaction ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...data,
+            phoneNumber: data.phoneNumber.replace(/[^\d+]/g, ""),
+          }),
+        }
+      );
 
-      const url = transaction
-        ? `/api/transactions/${transaction.id}`
-        : "/api/transactions";
+      if (!response.ok) throw new Error("Request failed");
 
-      const method = transaction ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        const errorMessage =
-          responseData.error ||
-          (transaction
-            ? "Gagal mengupdate transaksi"
-            : "Gagal membuat transaksi");
-        throw new Error(errorMessage);
-      }
-
-      toast({
-        title: "Sukses!",
-        description: transaction
-          ? "Transaksi berhasil diupdate"
-          : "Transaksi baru berhasil dibuat",
-      });
-
-      router.push("/transactions");
       router.refresh();
-    } catch (error: any) {
+      router.push("/transactions");
+      toast({
+        title: "Success!",
+        description: transaction ? "Transaction updated" : "Transaction created",
+      });
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to save transaction",
         variant: "destructive",
       });
     } finally {
@@ -121,18 +128,19 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
     }
   };
 
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Customer Name */}
             <div className="space-y-2">
-              <Label htmlFor="customerName">Customer Name</Label>
+              <Label htmlFor="customerName">Nama Pelanggan</Label>
               <Input
                 id="customerName"
                 {...register("customerName")}
-                placeholder="Enter customer name"
+                placeholder="Nama lengkap pelanggan"
+                className="w-full"
               />
               {errors.customerName && (
                 <p className="text-sm text-red-500">
@@ -141,17 +149,18 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
               )}
             </div>
 
+            {/* Phone Number */}
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">Nomor Telepon</Label>
               <Input
+                id="phoneNumber"
                 {...register("phoneNumber")}
+                value={formatPhoneNumber(watch("phoneNumber") || "")}
                 onChange={(e) => {
-                  const value = e.target.value
-                    .replace(/[^\d+]/g, "") // Hanya pertahankan angka dan +
-                    .replace(/(\+\d{0,3})(\d{0,15})/, "$1$2"); // Batasi panjang
-                  setValue("phoneNumber", value);
+                  const rawValue = e.target.value.replace(/[^\d+]/g, "");
+                  setValue("phoneNumber", rawValue);
                 }}
-                placeholder="Contoh: 08123456789"
+                placeholder="Contoh: +628123456789"
               />
               {errors.phoneNumber && (
                 <p className="text-sm text-red-500">
@@ -162,12 +171,13 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Item Type */}
             <div className="space-y-2">
               <Label htmlFor="itemType">Jenis Barang</Label>
               <Input
                 id="itemType"
                 {...register("itemType")}
-                placeholder="Masukkan jenis barang (e.g. baju)"
+                placeholder="Contoh: Pakaian, Elektronik"
               />
               {errors.itemType && (
                 <p className="text-sm text-red-500">
@@ -176,16 +186,17 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
               )}
             </div>
 
+            {/* Status */}
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Status Transaksi</Label>
               <Select
                 defaultValue={transaction?.status || "pending"}
                 onValueChange={(value) =>
-                  setValue("status", value.toLowerCase() as TransactionStatus)
+                  setValue("status", value as TransactionStatus)
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder="Pilih status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">Pending</SelectItem>
@@ -201,6 +212,7 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Weight */}
             <div className="space-y-2">
               <Label htmlFor="weight">Berat (kg)</Label>
               <Input
@@ -208,20 +220,21 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
                 type="number"
                 step="0.1"
                 {...register("weight")}
-                placeholder="Enter weight in kg"
+                placeholder="0.0"
               />
               {errors.weight && (
                 <p className="text-sm text-red-500">{errors.weight.message}</p>
               )}
             </div>
 
+            {/* Price */}
             <div className="space-y-2">
               <Label htmlFor="price">Harga (Rp)</Label>
               <Input
                 id="price"
                 type="number"
                 {...register("price")}
-                placeholder="Enter price"
+                placeholder="0"
               />
               {errors.price && (
                 <p className="text-sm text-red-500">{errors.price.message}</p>
@@ -230,8 +243,9 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-end space-x-2 pt-2">
+        <CardFooter className="flex justify-end gap-2 mt-6">
           <Button
+            type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
@@ -247,7 +261,7 @@ export function TransactionForm({ transaction }: TransactionFormProps) {
             ) : transaction ? (
               "Simpan Perubahan"
             ) : (
-              "Buat Transaksi"
+              "Buat Transaksi Baru"
             )}
           </Button>
         </CardFooter>
