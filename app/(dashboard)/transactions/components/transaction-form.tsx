@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,18 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Transaction, TransactionStatus } from "@/lib/types";
 
-// export interface Transaction {
-//   id: string;
-//   customerName: string;
-//   itemType: string;
-//   phoneNumber: string;
-//   weight: number;
-//   price: number;
-//   status: TransactionStatus;
-//   createdAt?: Date;
-//   updatedAt?: Date;
-// }
-
 const formSchema = z.object({
   customerName: z.string().min(3, "Nama harus minimal 3 karakter"),
   itemType: z.string().min(1, "Jenis barang wajib diisi"),
@@ -50,12 +37,6 @@ const formSchema = z.object({
     .min(1000, "Harga minimal Rp 1.000"),
   status: z.enum(["pending", "processing", "completed", "cancelled"]),
 });
-
-// type FormValues = z.infer<typeof formSchema>;
-
-// interface TransactionFormProps {
-//   transaction?: Transaction;
-// }
 
 export function TransactionForm({ transaction }: { transaction?: Transaction }) {
   const router = useRouter();

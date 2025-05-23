@@ -1,8 +1,6 @@
 
-// Transaction status options
 export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 
-// Transaction model
 export interface Transaction {
   id: string;
   customerName: string;
@@ -10,12 +8,11 @@ export interface Transaction {
   phoneNumber: string;
   weight: number;
   price: number;
-  status: TransactionStatus;
+  status:  "pending" | "processing" | "completed" | "cancelled";
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Dashboard stats
 export interface DashboardStats {
   dailyProfit: number;
   monthlyProfit: number;
@@ -25,7 +22,6 @@ export interface DashboardStats {
   pendingTransactions: number;
 }
 
-// Chart data types
 export interface ChartDataPoint {
   name: string;
   value: number;

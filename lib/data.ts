@@ -2,13 +2,12 @@
 import connectDB from "@/lib/mongodb";
 import { getTransactionModel } from "./models/Transaction";
 import type {
-  Transaction as TransactionType,
   Transaction,
   DashboardStats,
   RevenueData,
 } from "./types";
 
-// lib/data.ts
+
 const withDB = async <T>(fn: () => Promise<T>): Promise<T> => {
   try {
     await connectDB();
@@ -19,7 +18,6 @@ const withDB = async <T>(fn: () => Promise<T>): Promise<T> => {
   }
 };
 
-// Default values
 const DEFAULT_STATS: DashboardStats = {
   dailyProfit: 0,
   monthlyProfit: 0,
@@ -48,8 +46,9 @@ const getAggregateResult = (result: any[], defaultValue: number = 0) => {
   return result[0]?.total ?? defaultValue;
 };
 
-export const getTransactions = async (): Promise<TransactionType[]> => {
+export async function getTransactions (): Promise<Transaction[]> {
   try {
+    await connectDB();
     const Transaction = await getTransactionModel();
     const transactions = await Transaction.find()
       .sort({ createdAt: -1 })
@@ -74,21 +73,22 @@ export const getTransactions = async (): Promise<TransactionType[]> => {
 
 export async function getTransactionById(id: string) {
   try {
-    await connectDB(); // Ensure DB connection
+    await connectDB();
     const Transaction = await getTransactionModel();
+    
+    if (!Transaction) {
+      throw new Error("Transaction model not found");
+    }
+    const transaction = await Transaction.findById(id).lean();
 
-    // Fetch transaction by ID
-    const transaction = await Transaction.findById(id).lean(); // `.lean()` returns a plain object
-
-    return transaction || null;  // If no transaction found, return null
+    return transaction || null;
   } catch (error) {
     console.error("Error fetching transaction:", error);
     return null;
   }
 }
 
-// lib/data.ts
-export const addTransaction = async (data: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction> => {
+export async function addTransaction (data: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction> {
   return withDB<Transaction>(async () => {
     try {
       const Transaction = await getTransactionModel();
@@ -121,7 +121,7 @@ export const addTransaction = async (data: Omit<Transaction, "id" | "createdAt" 
   });
 };
 
-export const updateTransaction = async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
+export async function updateTransaction (id: string, data: Partial<Transaction>): Promise<Transaction> {
   return withDB<Transaction>(async () => {
     try {
       const Transaction = await getTransactionModel();
@@ -148,7 +148,7 @@ export const updateTransaction = async (id: string, data: Partial<Transaction>):
   });
 };
 
-export const deleteTransaction = async (id: string): Promise<boolean> => {
+export async function deleteTransaction(id: string): Promise<boolean> {
   return withDB(async () => {
     try {
       const Transaction = await getTransactionModel();
@@ -161,7 +161,7 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
   });
 };
 
-export const getDashboardStats = async (): Promise<DashboardStats> => {
+export async function getDashboardStats (): Promise<DashboardStats> {
   try {
     const Transaction = await getTransactionModel();
     const count = await Transaction.countDocuments();
@@ -209,7 +209,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   }
 };
 
-export const getMonthlyRevenueData = async (): Promise<RevenueData[]> => {
+export async function getMonthlyRevenueData (): Promise<RevenueData[]>{
   try {
     const Transaction = await getTransactionModel();
     const count = await Transaction.countDocuments();
@@ -248,7 +248,7 @@ export const getMonthlyRevenueData = async (): Promise<RevenueData[]> => {
   }
 };
 
-export const getStatusDistribution = async () => {
+export async function getStatusDistribution() {
   try {
     const Transaction = await getTransactionModel();
     const count = await Transaction.countDocuments();

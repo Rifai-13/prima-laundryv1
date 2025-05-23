@@ -1,81 +1,38 @@
-// models/Transaction.ts
-import connectDB from "@/lib/mongodb";
-import mongoose, { Document, Model, Schema } from "mongoose";
+import mongoose, { Model, Schema, Document } from 'mongoose';
 
-interface ITransaction extends Document {
+export interface ITransaction {
   customerName: string;
   itemType: string;
   phoneNumber: string;
   weight: number;
   price: number;
-  status: "pending" | "processing" | "completed" | "cancelled";
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+}
+
+export interface TransactionDocument extends ITransaction, Document {
+  _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
-
-const transactionSchema = new Schema<ITransaction>(
+const transactionSchema = new Schema<TransactionDocument>(
   {
-    customerName: {
-      type: String,
-      required: [true, "Nama pelanggan harus diisi"],
-    },
-    itemType: {
-      type: String,
-      required: true,
-    },
-    phoneNumber: {
-      type: String,
-      validate: {
-        validator: (v: string) => /^\d{10,14}$/.test(v),
-        message: "Nomor telepon harus 10-14 digit angka",
-      },
-    },
-    weight: {
-      type: Number,
-      required: true,
-    },
-    price: {
-      type: Number,
-      required: true,
-    },
+    customerName: { type: String, required: true },
+    itemType: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    weight: { type: Number, required: true },
+    price: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "processing", "completed", "cancelled"],
-      required: true,
-    },
+      enum: ['pending', 'processing', 'completed', 'cancelled'],
+      default: 'pending'
+    }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-
-transactionSchema.virtual("formattedDate").get(function () {
-  return this.createdAt.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-});
-
-// let Transaction: Model<ITransaction>;
-
-transactionSchema.statics = {
-  async connect() {
-    if (!mongoose.connection.readyState) {
-      await connectDB();
-    }
-    return this;
-  },
-};
-
-export const getTransactionModel = async (): Promise<Model<ITransaction>> => {
+export const getTransactionModel = (): Model<TransactionDocument> => {
   if (mongoose.models.Transaction) {
-    return mongoose.models.Transaction;
+    return mongoose.models.Transaction as Model<TransactionDocument>;
   }
-
-  await connectDB();
-  return mongoose.model<ITransaction>("Transaction", transactionSchema);
+  return mongoose.model<TransactionDocument>('Transaction', transactionSchema);
 };
-
-export type { ITransaction };

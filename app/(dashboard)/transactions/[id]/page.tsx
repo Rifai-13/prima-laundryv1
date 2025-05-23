@@ -1,19 +1,21 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { getTransactions } from "@/lib/data"; // Import the available getTransactions function
+import { getTransactions } from "@/lib/data";
 import { TransactionForm } from "../components/transaction-form";
 
-export default async function TransactionEditPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+// Perbaiki tipe params yang digunakan pada halaman
+interface TransactionEditPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function TransactionEditPage({ params }: TransactionEditPageProps) {
+  // Pastikan untuk menunggu Promise untuk mendapatkan nilai params
+  const resolvedParams = await params;
+
   const transactions = await getTransactions();
+  const transaction = transactions.find((t) => t.id.toString() === resolvedParams.id);
 
-  // Konversi ke string jika ID dari database berupa number
-  const transaction = transactions.find((t) => t.id.toString() === params.id);
-
-  if (!transaction) notFound();
+  if (!transaction) notFound(); // Jika transaksi tidak ditemukan, arahkan ke halaman notFound
 
   return (
     <div>
@@ -21,7 +23,6 @@ export default async function TransactionEditPage({
         title="Edit Transaction"
         description="Update the details of this transaction"
       />
-
       <div className="max-w-2xl mx-auto">
         <TransactionForm transaction={transaction} />
       </div>

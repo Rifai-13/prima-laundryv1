@@ -1,12 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { getTransactions } from "@/lib/data";
 import { Plus } from "lucide-react";
 import { TransactionsTable } from "./components/transactions-table";
+// Import type dari model atau types file
+import type { Transaction } from "@/lib/types";
+
+export const dynamic = 'force-dynamic';
 
 export default async function TransactionsPage() {
-  const transactions = await getTransactions();
+  let transactions: Transaction[] = [];
+  
+  try {
+    transactions = await getTransactions();
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+  }
 
   return (
     <div>
