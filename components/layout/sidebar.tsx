@@ -32,7 +32,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [username, setUsername] = useState<string>("");
+  const [name, setName] = useState<string>("");
 
 const fetchUser = async () => {
   try {
@@ -49,7 +49,7 @@ const fetchUser = async () => {
       throw new Error(data.error || "Failed to fetch user");
     }
 
-    setUsername(data.user.username);
+    setName(data.user.name);
   } catch (error: any) {
     console.error("Fetch user error:", error);
     toast({
@@ -110,7 +110,7 @@ const fetchUser = async () => {
               <path d="M6.75 5.3A1.17 1.17 0 0 1 8 7.04" />
             </svg>
           </span>
-          <span>LaundryPro</span>
+          <span>Prima Laundry</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
@@ -142,11 +142,11 @@ const fetchUser = async () => {
             <div className="flex items-center space-x-1">
               <span className="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full">
                 <span className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                  {username ? username.charAt(0).toUpperCase() : "U"}
+                  {name ? name.charAt(0).toUpperCase() : "U"}
                 </span>
               </span>
               <div className="text-sm">
-                <p className="font-medium">{username || "User"}</p>
+                <p className="font-medium">{name || "User"}</p>
               </div>
             </div>
           </div>
