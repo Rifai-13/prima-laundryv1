@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "LaundryPro",
+  title: "Prima Laundry",
   description: "LaundryPro - Your laundry management solution",
 }
 
