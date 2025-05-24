@@ -65,11 +65,6 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
 };
 
   const columns: ColumnDef<Transaction>[] = [
-    // {
-    //   accessorKey: "id",
-    //   header: "ID",
-    //   cell: ({ row }) => <div className="font-medium">{row.original.id}</div>,
-    // },
     {
       accessorKey: "customerName",
       header: "Nama Pelanggan",
@@ -116,7 +111,6 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   href={{
                     pathname: `/transactions/${transaction.id}`,
                     query: {
-                      // id: transaction.id,
                       customerName: transaction.customerName,
                       itemType: transaction.itemType,
                       phoneNumber: transaction.phoneNumber,

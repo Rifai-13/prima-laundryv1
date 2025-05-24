@@ -1,5 +1,5 @@
 
-export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
+export type TransactionStatus = 'pending' | 'processing' | 'completed';
 
 export interface Transaction {
   id: string;
@@ -8,7 +8,7 @@ export interface Transaction {
   phoneNumber: string;
   weight: number;
   price: number;
-  status:  "pending" | "processing" | "completed" | "cancelled";
+  status:  "pending" | "processing" | "completed";
   createdAt: Date;
   updatedAt: Date;
 }

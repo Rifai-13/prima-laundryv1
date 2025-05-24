@@ -6,7 +6,7 @@ export interface ITransaction {
   phoneNumber: string;
   weight: number;
   price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed';
 }
 
 export interface TransactionDocument extends ITransaction, Document {
@@ -23,7 +23,7 @@ const transactionSchema = new Schema<TransactionDocument>(
     price: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'cancelled'],
+      enum: ['pending', 'processing', 'completed'],
       default: 'pending'
     }
   },

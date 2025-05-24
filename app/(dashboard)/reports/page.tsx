@@ -275,7 +275,7 @@ export default function ReportsPage() {
             </Card>
             <Card className="p-4">
               <h3 className="text-sm font-medium text-muted-foreground">
-                Total Revenue
+                Total Pendapatan
               </h3>
               <p className="text-2xl font-bold">
                 {formatCurrency(totalRevenue)}

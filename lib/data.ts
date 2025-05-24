@@ -39,7 +39,6 @@ const DEFAULT_STATUS_DATA = [
   { name: "pending", value: 0 },
   { name: "processing", value: 0 },
   { name: "completed", value: 0 },
-  { name: "cancelled", value: 0 },
 ];
 
 const getAggregateResult = (result: any[], defaultValue: number = 0) => {
