@@ -11,7 +11,6 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     pending: 'Pending',
     processing: 'Processing',
     completed: 'Completed',
-    cancelled: 'Cancelled',
   };
 
   return (
