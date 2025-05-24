@@ -92,7 +92,8 @@ export default function SignIn() {
               <path d="M6.75 5.3A1.17 1.17 0 0 1 8 7.04" />
             </svg>
           </div>
-          <CardTitle className="text-2xl text-center">LaundryPro</CardTitle>
+          <CardTitle className="text-2xl text-center">Prima Laundry</CardTitle>
+          <CardTitle className="text-xl text-center">Login</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access your account
           </CardDescription>

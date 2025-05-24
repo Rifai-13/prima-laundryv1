@@ -107,7 +107,8 @@ export default function SignUp() {
               <path d="M6.75 5.3A1.17 1.17 0 0 1 8 7.04" />
             </svg>
           </div>
-          <CardTitle className="text-2xl text-center">Create Account</CardTitle>
+          <CardTitle className="text-2xl text-center">Prima Laundry</CardTitle>
+          <CardTitle className="text-xl text-center">Create Account</CardTitle>
           <CardDescription className="text-center">
             Enter your information to create a new account
           </CardDescription>
