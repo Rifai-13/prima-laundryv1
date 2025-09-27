@@ -1,4 +1,4 @@
-// app/api/auth/transactions/route.ts
+// app/api/transactions/route.ts
 import connectDB from "@/lib/mongodb";
 import mongoose from "mongoose";
 import { getTransactionModel } from "@/lib/models/Transaction";
@@ -34,8 +34,6 @@ export async function GET() {
   }
 }
 
-
-
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -47,7 +45,10 @@ export async function POST(req: Request) {
 
     // Pastikan itemType tidak kosong atau hanya berisi spasi
     if (!body.itemType || body.itemType.trim().length === 0) {
-      return NextResponse.json({ error: "Jenis barang tidak boleh kosong" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Jenis barang tidak boleh kosong" },
+        { status: 400 }
+      );
     }
 
     // Validasi manual untuk error yang lebih spesifik
@@ -72,20 +73,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: errors.join(", ") }, { status: 400 });
     }
 
-    const newTransaction = new Transaction(body);
-    const savedTransaction = await newTransaction.save();
+    // const newTransaction = new Transaction(body);
+    // const savedTransaction = await newTransaction.save();
+    const savedTransaction = await addTransaction(body);
 
     // Pastikan _id adalah ObjectId dan kita bisa menggunakan toString()
-    const savedTransactionId = (savedTransaction._id as mongoose.Types.ObjectId).toString(); 
-
-    return NextResponse.json({
-      id: savedTransactionId,
-      ...savedTransaction.toObject(),
-    }, { status: 201 });
-
+    // const savedTransactionId = (
+    //   savedTransaction._id as mongoose.Types.ObjectId
+    // ).toString();
+    return NextResponse.json(savedTransaction, { status: 201 });
+    // return NextResponse.json({
+    //   id: savedTransactionId,
+    //   ...savedTransaction.toObject(),
+    // }, { status: 201 });
   } catch (error: any) {
-    console.error('Error:', error);
-    if (error.name === 'ValidationError') {
+    console.error("Error:", error);
+    if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err: any) => err.message);
       return NextResponse.json({ error: errors.join(", ") }, { status: 400 });
     }
@@ -101,35 +104,43 @@ export async function PUT(req: Request) {
   try {
     await connectDB();
     const Transaction = await getTransactionModel();
-    
+
     // Ambil ID dari query parameter
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    
+    const id = searchParams.get("id");
+
     if (!id) {
-      return NextResponse.json({ error: "ID transaksi tidak valid" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID transaksi tidak valid" },
+        { status: 400 }
+      );
     }
 
     const body = await req.json();
 
     // Validasi data
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      id,
-      body,
-      { new: true, runValidators: true }
-    );
+    // const updatedTransaction = await Transaction.findByIdAndUpdate(id, body, {
+    //   new: true,
+    //   runValidators: true,
+    // });
+
+    const updatedTransaction = await updateTransaction(id, body);
 
     if (!updatedTransaction) {
-      return NextResponse.json({ error: "Transaksi tidak ditemukan" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Transaksi tidak ditemukan" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({
-      id: (updatedTransaction as any)._id.toString(),
-      ...updatedTransaction.toObject()
-    });
+    return NextResponse.json(updatedTransaction);
 
+    // return NextResponse.json({
+    //   id: (updatedTransaction as any)._id.toString(),
+    //   ...updatedTransaction.toObject(),
+    // });
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
       { error: error.message || "Gagal memperbarui transaksi" },
       { status: 400 }

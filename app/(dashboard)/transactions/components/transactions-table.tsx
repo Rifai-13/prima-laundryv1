@@ -70,6 +70,25 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
       header: "Nama Pelanggan",
     },
     {
+      accessorKey: "gender",
+      header: "Jenis Kelamin",
+      cell: ({ row }) => {
+      const gender = row.original.gender;
+      if (gender === 'male') {
+        return <span>Laki-laki</span>;
+      }
+      if (gender === 'female') {
+        return <span>Perempuan</span>;
+      }
+      // Tampilkan strip jika data gender tidak ada (untuk data lama)
+      return <span>-</span>;
+    },
+    },
+    {
+      accessorKey: "phoneNumber",
+      header: "Nomor Telepon",
+    },
+    {
       accessorKey: "itemType",
       header: "Jenis Barang",
     },
@@ -112,6 +131,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                     pathname: `/transactions/${transaction.id}`,
                     query: {
                       customerName: transaction.customerName,
+                      gender: transaction.gender,
                       itemType: transaction.itemType,
                       phoneNumber: transaction.phoneNumber,
                       weight: transaction.weight,

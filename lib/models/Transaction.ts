@@ -1,7 +1,10 @@
+//lib/models/Transaction.ts
+
 import mongoose, { Model, Schema, Document } from 'mongoose';
 
 export interface ITransaction {
   customerName: string;
+  gender?: 'male' | 'female';
   itemType: string;
   phoneNumber: string;
   weight: number;
@@ -17,6 +20,7 @@ export interface TransactionDocument extends ITransaction, Document {
 const transactionSchema = new Schema<TransactionDocument>(
   {
     customerName: { type: String, required: true },
+    gender: { type: String, enum: ['male', 'female'] },
     itemType: { type: String, required: true },
     phoneNumber: { type: String, required: true },
     weight: { type: Number, required: true },

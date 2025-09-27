@@ -4,6 +4,7 @@ export type TransactionStatus = 'pending' | 'processing' | 'completed';
 export interface Transaction {
   id: string;
   customerName: string;
+  gender?: "male" | "female";
   itemType: string;
   phoneNumber: string;
   weight: number;

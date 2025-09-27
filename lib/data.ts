@@ -56,6 +56,7 @@ export async function getTransactions (): Promise<Transaction[]> {
     return transactions.map(t => ({
       id: t._id.toString(),
       customerName: t.customerName,
+      gender: t.gender,
       itemType: t.itemType,
       phoneNumber: t.phoneNumber,
       weight: t.weight,
@@ -93,6 +94,7 @@ export async function addTransaction (data: Omit<Transaction, "id" | "createdAt"
       const Transaction = await getTransactionModel();
       const newTransaction = new Transaction({
         customerName: data.customerName,
+        gender: data.gender,
         itemType: data.itemType,
         phoneNumber: data.phoneNumber,
         weight: data.weight,
@@ -105,6 +107,7 @@ export async function addTransaction (data: Omit<Transaction, "id" | "createdAt"
       return {
         id: savedTransaction._id.toString(),
         customerName: savedTransaction.customerName,
+        gender: savedTransaction.gender,
         itemType: savedTransaction.itemType,
         phoneNumber: savedTransaction.phoneNumber,
         weight: savedTransaction.weight,

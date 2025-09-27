@@ -16,12 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Transaction, TransactionStatus } from "@/lib/types";
 
 const formSchema = z.object({
   customerName: z.string().min(3, "Nama harus minimal 3 karakter"),
+  gender: z.enum(["male", "female"], {
+    required_error: "Jenis kelamin wajib diisi",
+  }),
   itemType: z.string().min(1, "Jenis barang wajib diisi"),
   phoneNumber: z
     .string()
@@ -35,10 +39,14 @@ const formSchema = z.object({
     .number()
     .positive("Harga harus angka positif")
     .min(1000, "Harga minimal Rp 1.000"),
-  status: z.enum(["pending", "processing", "completed", "cancelled"]),
+  status: z.enum(["pending", "processing", "completed"]),
 });
 
-export function TransactionForm({ transaction }: { transaction?: Transaction }) {
+export function TransactionForm({
+  transaction,
+}: {
+  transaction?: Transaction;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +61,7 @@ export function TransactionForm({ transaction }: { transaction?: Transaction }) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: transaction?.customerName || "",
+      gender: transaction?.gender,
       itemType: transaction?.itemType || "",
       phoneNumber: transaction?.phoneNumber || "",
       weight: transaction?.weight || 0,
@@ -73,11 +82,13 @@ export function TransactionForm({ transaction }: { transaction?: Transaction }) 
       });
   };
 
- const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
       const response = await fetch(
-        transaction ? `/api/transactions/${transaction.id}` : "/api/transactions",
+        transaction
+          ? `/api/transactions/${transaction.id}`
+          : "/api/transactions",
         {
           method: transaction ? "PUT" : "POST",
           headers: {
@@ -96,7 +107,9 @@ export function TransactionForm({ transaction }: { transaction?: Transaction }) 
       router.push("/transactions");
       toast({
         title: "Success!",
-        description: transaction ? "Transaction updated" : "Transaction created",
+        description: transaction
+          ? "Transaction updated"
+          : "Transaction created",
       });
     } catch (error) {
       toast({
@@ -127,6 +140,36 @@ export function TransactionForm({ transaction }: { transaction?: Transaction }) 
                 <p className="text-sm text-red-500">
                   {errors.customerName.message}
                 </p>
+              )}
+            </div>
+            
+            {/* --- [TAMBAHAN] Input Jenis Kelamin --- */}
+            <div className="space-y-2">
+              <Label>Jenis Kelamin</Label>
+              <RadioGroup
+                defaultValue={transaction?.gender}
+                onValueChange={(value) => {
+                  setValue("gender", value as "male" | "female", {
+                    shouldValidate: true,
+                  });
+                }}
+                className="flex items-center space-x-4 pt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="male" id="male" />
+                  <Label htmlFor="male" className="font-normal">
+                    Laki-laki
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="female" id="female" />
+                  <Label htmlFor="female" className="font-normal">
+                    Perempuan
+                  </Label>
+                </div>
+              </RadioGroup>
+              {errors.gender && (
+                <p className="text-sm text-red-500">{errors.gender.message}</p>
               )}
             </div>
 
