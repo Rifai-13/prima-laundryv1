@@ -17,15 +17,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Transaction, TransactionStatus } from "@/lib/types";
+import { Transaction, TransactionStatus, ServiceType } from "@/lib/types";
+
+//  Definisi layanan tambahan yang tersedia
+const availableServices = [
+  { id: "pewangi-khusus", label: "Pewangi Khusus" },
+  { id: "antar-jemput", label: "Layanan Antar Jemput" },
+  { id: "anti-noda", label: "Deterjen Anti Noda" },
+  { id: "setrika-ekstra", label: "Setrika Ekstra" },
+];
 
 const formSchema = z.object({
   customerName: z.string().min(3, "Nama harus minimal 3 karakter"),
   gender: z.enum(["male", "female"], {
     required_error: "Jenis kelamin wajib diisi",
   }),
+  serviceType: z.enum(["reguler", "express", "super-express"]).optional(),
+  additionalServices: z.array(z.string()).optional(),
   itemType: z.string().min(1, "Jenis barang wajib diisi"),
   phoneNumber: z
     .string()
@@ -56,12 +68,15 @@ export function TransactionForm({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: transaction?.customerName || "",
       gender: transaction?.gender,
+      serviceType: transaction?.serviceType || "reguler",
+      additionalServices: transaction?.additionalServices || [],
       itemType: transaction?.itemType || "",
       phoneNumber: transaction?.phoneNumber || "",
       weight: transaction?.weight || 0,
@@ -125,7 +140,7 @@ export function TransactionForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="pt-6 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Customer Name */}
             <div className="space-y-2">
@@ -142,7 +157,7 @@ export function TransactionForm({
                 </p>
               )}
             </div>
-            
+
             {/* --- [TAMBAHAN] Input Jenis Kelamin --- */}
             <div className="space-y-2">
               <Label>Jenis Kelamin</Label>
@@ -170,6 +185,44 @@ export function TransactionForm({
               </RadioGroup>
               {errors.gender && (
                 <p className="text-sm text-red-500">{errors.gender.message}</p>
+              )}
+            </div>
+
+            {/* --- [BARU] Input Paket Layanan --- */}
+            <div className="space-y-2">
+              <Label>Paket Layanan</Label>
+              <RadioGroup
+                defaultValue={transaction?.serviceType || "reguler"}
+                onValueChange={(value) => {
+                  setValue("serviceType", value as ServiceType, {
+                    shouldValidate: true,
+                  });
+                }}
+                className="flex items-center space-x-4 pt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="reguler" id="reguler" />
+                  <Label htmlFor="reguler" className="font-normal">
+                    Reguler
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="express" id="express" />
+                  <Label htmlFor="express" className="font-normal">
+                    Express
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="super-express" id="super-express" />
+                  <Label htmlFor="super-express" className="font-normal">
+                    Super Express
+                  </Label>
+                </div>
+              </RadioGroup>
+              {errors.serviceType && (
+                <p className="text-sm text-red-500">
+                  {errors.serviceType.message}
+                </p>
               )}
             </div>
 
@@ -264,6 +317,54 @@ export function TransactionForm({
               )}
             </div>
           </div>
+            {/* --- [BARU] Input Layanan Tambahan (Checkbox) --- */}
+            <div className="space-y-2">
+              <Label>Layanan Tambahan</Label>
+              <div className="flex items-center space-x-4 pt-2">
+                <Controller
+                  control={control}
+                  name="additionalServices"
+                  render={({ field }) => (
+                    <>
+                      {availableServices.map((service) => (
+                        <div
+                          key={service.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={service.id}
+                            checked={field.value?.includes(service.id)}
+                            onCheckedChange={(checked) => {
+                              return checked
+                                ? field.onChange([
+                                    ...(field.value || []),
+                                    service.id,
+                                  ])
+                                : field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== service.id
+                                    )
+                                  );
+                            }}
+                          />
+                          <Label
+                            htmlFor={service.id}
+                            className="font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {service.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                />
+              </div>
+              {errors.additionalServices && (
+                <p className="text-sm text-red-500">
+                  {errors.additionalServices.message}
+                </p>
+              )}
+            </div>
         </CardContent>
 
         <CardFooter className="flex justify-end gap-2 mt-6">
