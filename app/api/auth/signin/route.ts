@@ -16,6 +16,16 @@ export async function POST(request: Request) {
 
     // Validasi input
     const { email, password } = await request.json();
+
+    // Validasi email harus @gmail.com
+    if (!email.endsWith('@gmail.com')) {
+      return NextResponse.json(
+        { error: "Email tidak valid. Harus menggunakan @gmail.com" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi credentials
     validateCredentials(email, password);
 
     // Cari user
@@ -23,12 +33,29 @@ export async function POST(request: Request) {
       .select('+password')
       .lean() as any;
 
-    if (!user || !user.name || !user.email || !user.password) {
-      return invalidCredentialsResponse();
+    // Jika email tidak terdaftar
+    if (!user) {
+      return NextResponse.json(
+        { error: "Email tidak terdaftar" },
+        { status: 404 }
+      );
     }
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return invalidCredentialsResponse();
+    // Validasi field user
+    if (!user.name || !user.email || !user.password) {
+      return NextResponse.json(
+        { error: "Data user tidak lengkap" },
+        { status: 400 }
+      );
+    }
+
+    // Verifikasi password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: "Password tidak valid" },
+        { status: 401 }
+      );
     }
 
     // Generate token dan session
@@ -52,12 +79,6 @@ export async function POST(request: Request) {
 }
 
 // Helper functions
-const invalidCredentialsResponse = () =>
-  NextResponse.json(
-    { error: "Invalid email or password" },
-    { status: 401 }
-  );
-
 const sanitizeUser = (user: any) => ({
   id: user._id.toString(),
   name: user.name,
@@ -78,4 +99,3 @@ function serverErrorResponse(error: any) {
     { status: 500 }
   );
 }
-

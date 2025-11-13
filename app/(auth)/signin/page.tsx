@@ -14,20 +14,52 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast"; // Pastikan menggunakan useToast yang konsisten
 import { Eye, EyeOff } from "lucide-react";
 
 export default function SignIn() {
   const router = useRouter();
+  const { toast } = useToast(); // Menggunakan useToast yang sama dengan signup
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
+
+  // Validasi email real-time
+  const validateEmail = (email: string) => {
+    if (email && !email.endsWith("@gmail.com")) {
+      setErrors((prev) => ({
+        ...prev,
+        email: "Email harus menggunakan @gmail.com",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, email: "" }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi client-side
+    if (!formData.email.endsWith("@gmail.com")) {
+      setErrors((prev) => ({
+        ...prev,
+        email: "Email harus menggunakan @gmail.com",
+      }));
+      toast({
+        title: "Error",
+        description: "Email harus menggunakan @gmail.com",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -40,30 +72,61 @@ export default function SignIn() {
           email: formData.email.toLowerCase().trim(),
           password: formData.password,
         }),
-        credentials: "include", // Penting untuk cookie
+        credentials: "include",
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Login gagal");
+        // Menampilkan pesan error yang spesifik dari server
+        throw new Error(data.error || "Login gagal");
       }
+
+      // Login berhasil
+      toast({
+        title: "Berhasil",
+        description: "Login berhasil",
+      });
 
       // Redirect setelah login berhasil
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);
     } catch (error: any) {
-      toast.error(error.message || "Error 500: Hubungi admin");
+      // Menampilkan pesan error yang spesifik
+      let errorMessage = "Terjadi kesalahan saat login";
+
+      if (error.message.includes("Email tidak terdaftar")) {
+        errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
+      } else if (error.message.includes("Password tidak valid")) {
+        errorMessage = "Password tidak valid. Silakan coba lagi.";
+      } else if (error.message.includes("Email tidak valid")) {
+        errorMessage = "Email harus menggunakan @gmail.com";
+      } else {
+        errorMessage = error.message;
+      }
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+
+    // Validasi real-time untuk email
+    if (id === "email") {
+      validateEmail(value);
+    }
   };
 
   return (
@@ -105,11 +168,15 @@ export default function SignIn() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="name@gmail.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
+                className={errors.email ? "border-red-500" : ""}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -122,8 +189,6 @@ export default function SignIn() {
                 </Link>
               </div>
               <div className="relative">
-                {" "}
-                {/* Tambahkan div wrapper dengan relative positioning */}
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}

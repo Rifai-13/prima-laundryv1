@@ -42,7 +42,7 @@ const formSchema = z.object({
   phoneNumber: z
     .string()
     .min(10, "Nomor telepon minimal 10 digit")
-    .max(14, "Nomor telepon maksimal 14 digit"),
+    .max(13, "Nomor telepon maksimal 13 digit"),
   weight: z.coerce
     .number()
     .positive("Berat harus angka positif")
@@ -93,7 +93,7 @@ export function TransactionForm({
         if (p1) parts.push(p1);
         if (p2) parts.push(p2);
         if (p3) parts.push(p3);
-        return parts.join("-");
+        return parts.join("");
       });
   };
 
@@ -237,7 +237,7 @@ export function TransactionForm({
                   const rawValue = e.target.value.replace(/[^\d+]/g, "");
                   setValue("phoneNumber", rawValue);
                 }}
-                placeholder="Contoh: +628123456789"
+                placeholder="Contoh: 08123456789"
               />
               {errors.phoneNumber && (
                 <p className="text-sm text-red-500">
