@@ -8,15 +8,15 @@ import type { Transaction } from "@/lib/types";
 export const dynamic = 'force-dynamic';
 
 export default async function TransactionsPage() {
-  let transactions: Transaction[] = [];
+  let transactions: Transaction[] = [];       //S1
   
   try {
-    transactions = await getTransactions();
+    transactions = await getTransactions();   //S2
   } catch (error) {
-    console.error("Failed to fetch transactions:", error);
+    console.error("Failed to fetch transactions:", error);    //S3
   }
 
-  return (
+  return (       //S4
     <div>
       <PageHeader
         title="Transactions"

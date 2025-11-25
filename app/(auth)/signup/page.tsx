@@ -30,25 +30,68 @@ export default function SignUp() {
     password: "",
     confirmPassword: "",
   });
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  // Di dalam handleSubmit:
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validasi form
+  const validateForm = () => {
+    const newErrors = {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
+
+    // Validasi email
+    if (formData.email && !formData.email.endsWith("@gmail.com")) {
+      newErrors.email = "Email harus menggunakan @gmail.com";
+    }
 
     // Validasi password
+    if (formData.password && formData.password.length < 8) {
+      newErrors.password = "Password minimal 8 karakter";
+    }
+
+    // Validasi konfirmasi password
     if (formData.password !== formData.confirmPassword) {
-      toast({
+      newErrors.confirmPassword = "Password tidak sama";
+    }
+
+    setErrors(newErrors);
+    return (
+      !newErrors.email && !newErrors.password && !newErrors.confirmPassword
+    );
+  };
+
+  // Handle input change dengan validasi real-time
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Clear error ketika user mulai mengetik
+    if (errors[field as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+  // Di dalam handleSubmit:
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();                       //S1
+
+    // Validasi sebelum submit
+    if (!validateForm()) {                    //S2
+      toast({                                  //S3
         title: "Error",
-        description: "Password tidak sama",
+        description: "Tolong perbaiki error pada form",
         variant: "destructive",
       });
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true);                    //S4
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/auth/signup", {    //S5
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,26 +101,26 @@ export default function SignUp() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json();     //S6
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registrasi gagal");
+      if (!response.ok) {                //S7
+        throw new Error(data.error || "Registrasi gagal");      //S8
       }
 
-      toast({
+      toast({                   //S9
         title: "Berhasil",
         description: "Akun berhasil dibuat",
       });
 
-      router.push("/signin");
-    } catch (error: any) {
+      router.push("/signin");        //S10
+    } catch (error: any) {                //S11
       toast({
         title: "Error",
         description: error.message || "Gagal membuat akun",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false);               //S12
     }
   };
 
@@ -133,13 +176,15 @@ export default function SignUp() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="name@gmail.com"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 required
+                className={errors.email ? "border-red-500" : ""}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -149,10 +194,11 @@ export default function SignUp() {
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
+                    handleInputChange("password", e.target.value)
                   }
                   required
-                  className="pr-10"
+                  className={`pr-10 ${errors.password ? "border-red-500" : ""}`}
+                  minLength={8}
                 />
                 <Button
                   type="button"
@@ -168,6 +214,11 @@ export default function SignUp() {
                   )}
                 </Button>
               </div>
+              {errors.password ? (
+                <p className="text-red-500 text-sm">{errors.password}</p>
+              ) : (
+                <p className="text-gray-500 text-sm">Minimal 8 karakter</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -178,13 +229,11 @@ export default function SignUp() {
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
+                    handleInputChange("confirmPassword", e.target.value)
                   }
                   required
-                  className="pr-10"
+                  className={`pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                  minLength={8}
                 />
                 <Button
                   type="button"
@@ -200,6 +249,9 @@ export default function SignUp() {
                   )}
                 </Button>
               </div>
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

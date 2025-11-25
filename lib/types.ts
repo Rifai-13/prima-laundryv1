@@ -1,9 +1,13 @@
 
 export type TransactionStatus = 'pending' | 'processing' | 'completed';
+export type ServiceType = 'reguler' | 'express' | 'super-express';
 
 export interface Transaction {
   id: string;
   customerName: string;
+  gender?: "male" | "female";
+  serviceType?: ServiceType;
+  additionalServices?: string[];
   itemType: string;
   phoneNumber: string;
   weight: number;

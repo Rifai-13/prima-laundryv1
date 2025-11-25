@@ -14,11 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteTransaction } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { add } from "date-fns";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -33,41 +35,62 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
   );
 
   const handleDelete = async () => {
-  if (!transactionToDelete) return;
-
-  try {
-    const response = await fetch(`/api/transactions/${transactionToDelete}`, {
-      method: "DELETE",
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Gagal menghapus transaksi");
+    if (!transactionToDelete) {         //S1
+       return;          // S2:
     }
 
-    toast({
-      title: "Berhasil!",
-      description: "Transaksi berhasil dihapus",
-    });
+    try {         //S3
+      const response = await fetch(`/api/transactions/${transactionToDelete}`, {
+        method: "DELETE",
+      });
 
-    router.refresh();
-  } catch (error: any) {
-    toast({
-      title: "Error",
-      description: error.message,
-      variant: "destructive",
-    });
-  } finally {
-    setIsDeleteDialogOpen(false);
-    setTransactionToDelete(null);
-  }
-};
+      const result = await response.json();       //S4
+
+      if (!response.ok) {         //S5
+        throw new Error(result.error || "Gagal menghapus transaksi");           //S6
+      }
+
+      toast({         //S7
+        title: "Berhasil!",
+        description: "Transaksi berhasil dihapus",
+      });
+
+      router.refresh();       //S8
+    } catch (error: any) {
+      toast({         //S9
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);       //S10
+      setTransactionToDelete(null);       //S11
+    }
+  };
 
   const columns: ColumnDef<Transaction>[] = [
     {
       accessorKey: "customerName",
       header: "Nama Pelanggan",
+    },
+    {
+      accessorKey: "gender",
+      header: "Jenis Kelamin",
+      cell: ({ row }) => {
+        const gender = row.original.gender;
+        if (gender === "male") {
+          return <span>Laki-laki</span>;
+        }
+        if (gender === "female") {
+          return <span>Perempuan</span>;
+        }
+        // Tampilkan strip jika data gender tidak ada (untuk data lama)
+        return <span>-</span>;
+      },
+    },
+    {
+      accessorKey: "phoneNumber",
+      header: "Nomor Telepon",
     },
     {
       accessorKey: "itemType",
@@ -86,6 +109,42 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: "serviceType",
+      header: "Paket Layanan",
+      cell: ({ row }) => {
+        const serviceType = row.original.serviceType;
+        // Menampilkan '-' jika data lama tidak punya serviceType
+        if (!serviceType) {
+          return <span>-</span>;
+        }
+        // Mengubah format agar lebih mudah dibaca (e.g., "super-express" -> "Super Express")
+        const formatted = serviceType
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        return <span>{formatted}</span>;
+      },
+    },
+    {
+      accessorKey: "additionalServices",
+      header: "Layanan Tambahan",
+      cell: ({ row }) => {
+        const services = row.original.additionalServices;
+        if (!services || services.length === 0) {
+          return <span>-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {services.map((service) => (
+              <Badge key={service} variant="secondary">
+                {service.replace("-", " ")}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "createdAt",
@@ -112,11 +171,14 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                     pathname: `/transactions/${transaction.id}`,
                     query: {
                       customerName: transaction.customerName,
+                      gender: transaction.gender,
+                      serviceType: transaction.serviceType,
                       itemType: transaction.itemType,
                       phoneNumber: transaction.phoneNumber,
                       weight: transaction.weight,
                       price: transaction.price,
                       status: transaction.status,
+                      additionalServices: transaction.additionalServices,
                     },
                   }}
                 >
