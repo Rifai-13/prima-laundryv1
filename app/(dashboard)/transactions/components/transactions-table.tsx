@@ -35,34 +35,36 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
   );
 
   const handleDelete = async () => {
-    if (!transactionToDelete) return;
+    if (!transactionToDelete) {         //S1
+       return;          // S2:
+    }
 
-    try {
+    try {         //S3
       const response = await fetch(`/api/transactions/${transactionToDelete}`, {
         method: "DELETE",
       });
 
-      const result = await response.json();
+      const result = await response.json();       //S4
 
-      if (!response.ok) {
-        throw new Error(result.error || "Gagal menghapus transaksi");
+      if (!response.ok) {         //S5
+        throw new Error(result.error || "Gagal menghapus transaksi");           //S6
       }
 
-      toast({
+      toast({         //S7
         title: "Berhasil!",
         description: "Transaksi berhasil dihapus",
       });
 
-      router.refresh();
+      router.refresh();       //S8
     } catch (error: any) {
-      toast({
+      toast({         //S9
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setIsDeleteDialogOpen(false);
-      setTransactionToDelete(null);
+      setIsDeleteDialogOpen(false);       //S10
+      setTransactionToDelete(null);       //S11
     }
   };
 

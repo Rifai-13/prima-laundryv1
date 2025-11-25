@@ -98,42 +98,44 @@ export function TransactionForm({
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
+    setIsSubmitting(true);   //S1
     try {
-      const response = await fetch(
+      const response = await fetch(    //S7
         transaction
-          ? `/api/transactions/${transaction.id}`
-          : "/api/transactions",
+          ? `/api/transactions/${transaction.id}`   //S2
+          : "/api/transactions",   //S3
         {
-          method: transaction ? "PUT" : "POST",
+          method: transaction ? "PUT" : "POST",   //S4 & S5
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...data,
-            phoneNumber: data.phoneNumber.replace(/[^\d+]/g, ""),
+            phoneNumber: data.phoneNumber.replace(/[^\d+]/g, ""),   //S6
           }),
         }
       );
 
-      if (!response.ok) throw new Error("Request failed");
+      if (!response.ok) {   //S8
+        throw new Error("Request failed");   //S9
+      }
 
-      router.refresh();
-      router.push("/transactions");
-      toast({
+      router.refresh();  //S10
+      router.push("/transactions");  //S11
+      toast({          //S14
         title: "Success!",
         description: transaction
-          ? "Transaction updated"
-          : "Transaction created",
+          ? "Transaction updated"    //S12
+          : "Transaction created",   //S13
       });
     } catch (error) {
-      toast({
+      toast({           //S15
         title: "Error",
         description: "Failed to save transaction",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false);           //S16
     }
   };
 

@@ -76,11 +76,11 @@ export default function SignUp() {
   };
   // Di dalam handleSubmit:
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();                       //S1
 
     // Validasi sebelum submit
-    if (!validateForm()) {
-      toast({
+    if (!validateForm()) {                    //S2
+      toast({                                  //S3
         title: "Error",
         description: "Tolong perbaiki error pada form",
         variant: "destructive",
@@ -88,35 +88,10 @@ export default function SignUp() {
       return;
     }
 
-    // Validasi manual tambahan
-    if (!formData.email.endsWith("@gmail.com")) {
-      setErrors((prev) => ({
-        ...prev,
-        email: "Email harus menggunakan @gmail.com",
-      }));
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setErrors((prev) => ({
-        ...prev,
-        password: "Password minimal 8 karakter",
-      }));
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: "Password tidak sama",
-      }));
-      return;
-    }
-
-    setIsLoading(true);
+    setIsLoading(true);                    //S4
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/auth/signup", {    //S5
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,26 +101,26 @@ export default function SignUp() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json();     //S6
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registrasi gagal");
+      if (!response.ok) {                //S7
+        throw new Error(data.error || "Registrasi gagal");      //S8
       }
 
-      toast({
+      toast({                   //S9
         title: "Berhasil",
         description: "Akun berhasil dibuat",
       });
 
-      router.push("/signin");
-    } catch (error: any) {
+      router.push("/signin");        //S10
+    } catch (error: any) {                //S11
       toast({
         title: "Error",
         description: error.message || "Gagal membuat akun",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false);               //S12
     }
   };
 

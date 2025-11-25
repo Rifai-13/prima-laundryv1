@@ -44,11 +44,10 @@ export default function SignIn() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+    e.preventDefault();                   //S1
     // Validasi client-side
-    if (!formData.email.endsWith("@gmail.com")) {
-      setErrors((prev) => ({
+    if (!formData.email.endsWith("@gmail.com")) {     //S2
+      setErrors((prev) => ({                      //S3
         ...prev,
         email: "Email harus menggunakan @gmail.com",
       }));
@@ -59,11 +58,9 @@ export default function SignIn() {
       });
       return;
     }
-
-    setIsLoading(true);
-
+    setIsLoading(true);                     //S4
     try {
-      const response = await fetch("/api/auth/signin", {
+      const response = await fetch("/api/auth/signin", {    //S5
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,45 +71,39 @@ export default function SignIn() {
         }),
         credentials: "include",
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
+      const data = await response.json();         //S6
+      if (!response.ok) {                   //S7
         // Menampilkan pesan error yang spesifik dari server
-        throw new Error(data.error || "Login gagal");
+        throw new Error(data.error || "Login gagal");         //S8
       }
-
       // Login berhasil
-      toast({
+      toast({                         //S9
         title: "Berhasil",
         description: "Login berhasil",
       });
-
       // Redirect setelah login berhasil
-      setTimeout(() => {
+      setTimeout(() => {                   //S10
         router.push("/dashboard");
       }, 100);
-    } catch (error: any) {
+    } catch (error: any) {             //S11
       // Menampilkan pesan error yang spesifik
       let errorMessage = "Terjadi kesalahan saat login";
-
-      if (error.message.includes("Email tidak terdaftar")) {
+      if (error.message.includes("Email tidak terdaftar")) {            //S12
         errorMessage = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
-      } else if (error.message.includes("Password tidak valid")) {
+      } else if (error.message.includes("Password tidak valid")) {       //S13
         errorMessage = "Password tidak valid. Silakan coba lagi.";
-      } else if (error.message.includes("Email tidak valid")) {
+      } else if (error.message.includes("Email tidak valid")) {       //S14
         errorMessage = "Email harus menggunakan @gmail.com";
-      } else {
+      } else {                          //S15
         errorMessage = error.message;
       }
-
-      toast({
+      toast({                       //S16
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false);               //S17
     }
   };
 
