@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  compress: true,
   /* config options here */
   reactStrictMode: true,
   env: {
@@ -22,7 +23,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // Optional: Jika hosting di Vercel, tambahkan ini
+
   trailingSlash: true,
   
 };
